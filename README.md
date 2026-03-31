@@ -20,9 +20,3 @@ Interactive portfolio built as a 2D RPG using Phaser.js + Vite.
 npm install
 npm run dev
 ```
-
-Crea el archivo, luego:
-```
-git add README.md
-git commit -m "Add README"
-git push origin main
