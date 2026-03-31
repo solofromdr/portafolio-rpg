@@ -5,6 +5,7 @@ export class IntroScene extends Phaser.Scene {
 
   preload() {
     this.load.image("intro", "/assets/cutscenes/1ra.png");
+    this.load.audio("music-intro", "/audio/music/intro.ogg");
   }
 
   create() {
@@ -78,11 +79,15 @@ export class IntroScene extends Phaser.Scene {
     this.input.keyboard.on("keydown-SPACE", () => {
       if (textComplete) this.goToGame();
     });
+
+    this.music = this.sound.add("music-intro", { loop: true, volume: 0.5 });
+    this.music.play();
   }
 
   goToGame() {
     this.cameras.main.fade(600, 0, 0, 0);
     this.time.delayedCall(600, () => {
+      this.music.stop();
       this.scene.start("GameScene");
     });
   }

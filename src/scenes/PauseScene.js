@@ -82,7 +82,10 @@ export class PauseScene extends Phaser.Scene {
     continueBtn.on("pointerout", () =>
       continueBtn.setStyle({ fill: "#ffffff" }),
     );
-    continueBtn.on("pointerdown", () => this.resumeGame());
+    continueBtn.on("pointerdown", () => {
+      this.sound.play("sfx-ui-click");
+      this.resumeGame();
+    });
 
     // Menú principal
     const menuBtn = this.add
@@ -97,10 +100,14 @@ export class PauseScene extends Phaser.Scene {
     menuBtn.on("pointerover", () => menuBtn.setStyle({ fill: "#ff5555" }));
     menuBtn.on("pointerout", () => menuBtn.setStyle({ fill: "#555555" }));
     menuBtn.on("pointerdown", () => {
+      this.sound.play("sfx-ui-back");
+      this.sound.stopByKey("music-game");
       this.scene.stop("GameScene");
       this.scene.stop("PauseScene");
       this.scene.start("MenuScene");
     });
+
+    this.add.sound;
 
     // ESC para cerrar
     this.input.keyboard.on("keydown-ESC", () => this.resumeGame());

@@ -53,7 +53,7 @@ export class GateManager {
     this.scene.physics.add.collider(this.player, this.wall3);
 
     this.wall4south = this.scene.physics.add.staticImage(383, 408, null);
-    this.wall4south.setSize(20, 80);
+    this.wall4south.setSize(20, 100);
     this.wall4south.setVisible(false);
     this.scene.physics.add.collider(this.player, this.wall4south);
 

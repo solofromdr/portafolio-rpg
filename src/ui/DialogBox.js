@@ -44,6 +44,9 @@ export class DialogBox {
         repeat: fullText.length - 1,
         callback: () => {
           this.text.setText(this.text.text + fullText[index]);
+          if (fullText[index] !== " " && fullText[index] !== "\n") {
+            this.scene.sound.play("sfx-dialog", { volume: 0.4 });
+          }
           index++;
           if (index === fullText.length && onComplete) {
             onComplete();

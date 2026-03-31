@@ -38,9 +38,33 @@ export class BattleScene extends Phaser.Scene {
         frameHeight: 52,
       },
     );
+
+    this.load.spritesheet(
+      "slime-boss-phase2-idle",
+      "/assets/enemies/slime-boss-phase2-idle.png",
+      { frameWidth: 62, frameHeight: 52 },
+    );
+    this.load.spritesheet(
+      "slime-boss-phase2-jump",
+      "/assets/enemies/slime-boss-phase2-jump.png",
+      { frameWidth: 62, frameHeight: 52 },
+    );
+    this.load.spritesheet(
+      "slime-boss-phase2-hit",
+      "/assets/enemies/slime-boss-phase2-hit.png",
+      { frameWidth: 62, frameHeight: 52 },
+    );
+
+    this.load.audio("music-battle", "/audio/music/battle.ogg");
+
+    this.load.audio("sfx-shoot", "/audio/sounds/shoot.wav");
+    this.load.audio("sfx-hit-boss", "/audio/sounds/hit-boss.wav");
+    this.load.audio("sfx-death-boss", "/audio/sounds/death-boss.wav");
+    this.load.audio("sfx-hit-minions", "/audio/sounds/hit-minions.wav");
   }
 
   create() {
+    window.game = this.game; // para debug en consola
     this.victoryTriggered = false;
     this.boss = null;
     this.deathTriggered = false;
@@ -139,6 +163,10 @@ export class BattleScene extends Phaser.Scene {
 
     this.scene.launch("UIScene");
     this.ui = this.scene.get("UIScene");
+
+    this.sound.stopAll();
+    this.music = this.sound.add("music-battle", { loop: true, volume: 0.5 });
+    this.music.play();
   }
 
   _createNebula(x, y, color, size) {
@@ -338,7 +366,6 @@ export class BattleScene extends Phaser.Scene {
         alpha: 1,
         duration: 1000,
         onComplete: () => {
-          console.log("switching to GameScene...");
           this.time.delayedCall(2500, () => {
             this.cameras.main.once("camerafadeoutcomplete", () => {
               GAME_STATE.boss2Defeated = true;
@@ -364,6 +391,7 @@ export class BattleScene extends Phaser.Scene {
     this.player.cursors.up.enabled = false;
     this.player.cursors.down.enabled = false;
     this.input.keyboard.enabled = false;
+    this.projectiles.enabled = false;
 
     this.time.delayedCall(800, () => {
       const w = this.scale.width;
@@ -391,6 +419,7 @@ export class BattleScene extends Phaser.Scene {
               this.deathTriggered = false;
               this.scene.stop("UIScene");
               this.scene.stop("BattleScene");
+              this.music.stop();
               this.scene.start("GameScene", { bossDefeated: false });
             });
             this.cameras.main.fadeOut(1000);

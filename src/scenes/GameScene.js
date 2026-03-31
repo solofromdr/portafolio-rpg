@@ -11,6 +11,7 @@ import {
 import { GateManager } from "../entities/GateManager.js";
 import { AmmoBar } from "../ui/AmmoBar.js";
 import { SlimeMinion } from "../entities/SlimeMinion.js";
+import { BiomeEffects } from "../entities/BiomeEffects.js";
 
 export class GameScene extends Phaser.Scene {
   constructor() {
@@ -27,11 +28,11 @@ export class GameScene extends Phaser.Scene {
     this.load.image("relief", "/map/relief.png");
     this.load.image("water", "/map/TilesetWater.png");
 
-    this.load.spritesheet("idle", "/assets/idle/idle.png", {
+    this.load.spritesheet("idle", "/assets/idle/Idle.png", {
       frameWidth: 16,
       frameHeight: 16,
     });
-    this.load.spritesheet("walk", "/assets/walk/walk.png", {
+    this.load.spritesheet("walk", "/assets/walk/Walk.png", {
       frameWidth: 16,
       frameHeight: 16,
     });
@@ -39,7 +40,15 @@ export class GameScene extends Phaser.Scene {
       frameWidth: 16,
       frameHeight: 16,
     });
-    this.load.image("lance", "/assets/weapon/Shuriken.png");
+    this.load.spritesheet("lance", "/assets/weapon/Shuriken.png", {
+      frameWidth: 16,
+      frameHeight: 16,
+    });
+
+    this.load.spritesheet("player-attack", "/assets/player/PlayerAttack.png", {
+      frameWidth: 16,
+      frameHeight: 16,
+    });
 
     this.load.image("guardian", "/assets/cutscenes/2da.png");
 
@@ -50,6 +59,17 @@ export class GameScene extends Phaser.Scene {
       frameWidth: 16,
       frameHeight: 16,
     });
+
+    this.load.audio("music-game", "/audio/music/game.ogg");
+
+    this.load.audio("sfx-shoot", "/audio/sounds/shoot.wav");
+    this.load.audio("sfx-dash", "/audio/sounds/dash.wav");
+    this.load.audio("sfx-hit-player", "/audio/sounds/hit-player.wav");
+    this.load.audio("sfx-hit-minions", "/audio/sounds/hit-minions.wav");
+    this.load.audio("sfx-death-player", "/audio/sounds/death-player.wav");
+    this.load.audio("sfx-dialog", "/audio/sounds/dialog.wav");
+    this.load.audio("sfx-pause", "/audio/sounds/pause.wav");
+    this.load.audio("sfx-alert", "/audio/sounds/alert.wav");
   }
 
   create() {
@@ -123,6 +143,9 @@ export class GameScene extends Phaser.Scene {
     this.cameras.main.startFollow(playerSprite);
     this.uiCamera.ignore(playerSprite);
 
+    // Efectos de bioma
+    this.biomeEffects = new BiomeEffects(this);
+
     // NPC
     this.npc = new NPC(this, NPC_CONFIG.x, NPC_CONFIG.y, dialogBox, () => {
       this.projectiles.enable();
@@ -135,6 +158,10 @@ export class GameScene extends Phaser.Scene {
 
     // Gate system
     this.gateManager = new GateManager(this, playerSprite, dialogBox);
+
+    if (GAME_STATE.boss2Defeated) this.gateManager.openGate(3);
+    if (GAME_STATE.boss3Defeated) this.gateManager.openGate(4);
+
     this.uiCamera.ignore([
       this.gateManager.gate2,
       this.gateManager.gate3,
@@ -145,6 +172,7 @@ export class GameScene extends Phaser.Scene {
     // Pausa con ESC
     this.input.keyboard.on("keydown-ESC", () => {
       this.scene.pause("GameScene");
+      this.sound.play("sfx-pause");
       this.scene.launch("PauseScene");
     });
 
@@ -207,6 +235,7 @@ export class GameScene extends Phaser.Scene {
     this.physics.add.overlap(this.player.getSprite(), this.slimeGroup, () => {
       this.cameras.main.shake(200, 0.01);
       this.cameras.main.flash(100, 255, 0, 0);
+      this.sound.play("sfx-hit-player");
     });
 
     // Restaurar estado si ya se habló con la guardiana
@@ -293,6 +322,10 @@ export class GameScene extends Phaser.Scene {
       this.portalX = px;
       this.portalY = py;
     }
+
+    this.sound.stopAll();
+    this.music = this.sound.add("music-game", { loop: true, volume: 0.5 });
+    this.music.play();
   }
 
   _triggerBossFight() {
@@ -308,18 +341,18 @@ export class GameScene extends Phaser.Scene {
   }
 
   update(time, delta) {
+    const playerSprite = this.player.getSprite();
     this.player.update(PLAYER_CONFIG.speed);
-    this.npc.update(this.player.getSprite().x, this.player.getSprite().y);
+    this.npc.update(playerSprite.x, playerSprite.y);
     this.slimes.forEach((slime) =>
-      slime.update(this.player.getSprite().x, this.player.getSprite().y, delta),
+      slime.update(playerSprite.x, playerSprite.y, delta),
     );
     this.cursor.setPosition(
       this.input.activePointer.x,
       this.input.activePointer.y,
     );
-
+    this.biomeEffects.update(playerSprite.x, playerSprite.y); 
     if (this.portalActive && this.portalKey.isDown) {
-      const playerSprite = this.player.getSprite();
       const dist = Phaser.Math.Distance.Between(
         playerSprite.x,
         playerSprite.y,
@@ -328,6 +361,7 @@ export class GameScene extends Phaser.Scene {
       );
       if (dist < 40) {
         this.portalActive = false;
+        this.music.stop();
         this.scene.start("BattleScene");
       }
     }

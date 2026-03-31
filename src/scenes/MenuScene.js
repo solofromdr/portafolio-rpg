@@ -7,6 +7,12 @@ export class MenuScene extends Phaser.Scene {
     this.load.image("cursor-interact", "/assets/ui/Interact.png");
     this.load.image("cursor-hit", "/assets/ui/Hit.png");
     this.load.image("guardian", "/assets/cutscenes/guardian.png");
+
+    this.load.audio("music-menu", "/audio/music/menu.ogg");
+
+    this.load.audio("sfx-ui-click", "/audio/sounds/ui-click.wav");
+    this.load.audio("sfx-ui-confirm", "/audio/sounds/ui-confirm.wav");
+    this.load.audio("sfx-ui-back", "/audio/sounds/ui-back.wav");
   }
 
   create() {
@@ -64,9 +70,39 @@ export class MenuScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
+      // more info
+
+    this.add
+      .text(
+        w / 2,
+        h * 0.5,
+        "Este no es solo un juego… es mi portafolio.\nDescubre mis habilidades explorando.",
+        {
+          fontSize: "11px",
+          fill: "#aaaaaa",
+          align: "center",
+          letterSpacing: 1,
+        },
+      )
+      .setOrigin(0.5);
+
+    this.add
+      .text(
+        w / 2,
+        h * 0.5 + 35,
+        "This is not just a game… it's my portfolio.\nDiscover my skills by exploring.",
+        {
+          fontSize: "11px",
+          fill: "#555555",
+          align: "center",
+          letterSpacing: 1,
+        },
+      )
+      .setOrigin(0.5);
+
     // Botón comenzar con parpadeo
     const startBtn = this.add
-      .text(w / 2, h * 0.6, "[ COMENZAR AVENTURA ]", {
+      .text(w / 2, h * 0.65, "[ COMENZAR AVENTURA ]", {
         fontSize: "18px",
         fill: "#ffffff",
         letterSpacing: 2,
@@ -86,6 +122,7 @@ export class MenuScene extends Phaser.Scene {
     // Hover del botón
     startBtn.on("pointerover", () => {
       startBtn.setStyle({ fill: "#ffff00" });
+      this.sound.play("sfx-ui-click");
     });
     startBtn.on("pointerout", () => {
       startBtn.setStyle({ fill: "#ffffff" });
@@ -93,8 +130,10 @@ export class MenuScene extends Phaser.Scene {
 
     // Click para iniciar
     startBtn.on("pointerdown", () => {
+      this.sound.play("sfx-ui-confirm");
       this.cameras.main.fade(500, 0, 0, 0);
       this.time.delayedCall(500, () => {
+        this.music.stop();
         this.scene.start("IntroScene");
       });
     });
@@ -167,9 +206,25 @@ export class MenuScene extends Phaser.Scene {
     ]);
 
     this.volume = 100;
-    volDown.on("pointerdown", () => this.changeVolume(-10));
-    volUp.on("pointerdown", () => this.changeVolume(10));
-    closePanel.on("pointerdown", () => this.volumePanel.setVisible(false));
+    volDown.on("pointerdown", () => {
+      this.sound.play("sfx-ui-click"); // click
+      this.changeVolume(-10);
+    });
+    volUp.on("pointerdown", () => {
+      this.sound.play("sfx-ui-click"); // click
+      this.changeVolume(10);
+    });
+    closePanel.on("pointerdown", () => {
+      this.sound.play("sfx-ui-back"); // atras
+      this.volumePanel.setVisible(false);
+    });
+
+    this.music = this.sound.add("music-menu", {
+      loop: true,
+      volume: 0.5,
+    });
+
+    this.music.play();
   }
 
   toggleVolume() {

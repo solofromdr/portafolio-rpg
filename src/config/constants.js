@@ -1,6 +1,6 @@
 export const GAME_CONFIG = {
-  width: window.innerWidth,
-  height: window.innerHeight,
+  width: 960,
+  height: 540,
   backgroundColor: "#1a0a2e",
   zoom: 1.5,
 };

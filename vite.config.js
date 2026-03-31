@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  base: '/portafolio-rpg/',
+  base: '/',
   optimizeDeps: {
     include: ['phaser']
   }
