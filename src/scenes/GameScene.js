@@ -59,9 +59,9 @@ export class GameScene extends Phaser.Scene {
       frameWidth: 16,
       frameHeight: 16,
     });
-
+    // Música
     this.load.audio("music-game", "/audio/music/game.ogg");
-
+    // Sonidos
     this.load.audio("sfx-shoot", "/audio/sounds/shoot.wav");
     this.load.audio("sfx-dash", "/audio/sounds/dash.wav");
     this.load.audio("sfx-hit-player", "/audio/sounds/hit-player.wav");
@@ -70,6 +70,17 @@ export class GameScene extends Phaser.Scene {
     this.load.audio("sfx-dialog", "/audio/sounds/dialog.wav");
     this.load.audio("sfx-pause", "/audio/sounds/pause.wav");
     this.load.audio("sfx-alert", "/audio/sounds/alert.wav");
+
+    //UI
+    this.load.image("dialogbox", "/assets/ui/DialogBoxFaceset.png");
+    this.load.image("faceset-npc", "/assets/ui/faceset-npc.png");
+    this.load.image("faceset-boss", "/assets/ui/faceset-boss.png");
+    this.load.font("NormalFont", "/assets/ui/NormalFont.ttf");
+
+    this.load.spritesheet("portfolio-items", "/assets/ui/items.png", {
+      frameWidth: 16,
+      frameHeight: 16,
+    });
   }
 
   create() {
@@ -122,18 +133,18 @@ export class GameScene extends Phaser.Scene {
     this.cameras.main.ignore(this.ammoBar.getObjects());
 
     // Cursor personalizado
-    this.input.setDefaultCursor("none");
-    this.cursor = this.add
-      .image(0, 0, "cursor-interact")
-      .setDepth(999)
-      .setScrollFactor(0)
-      .setScale(1);
-    this.uiCamera.ignore(this.cursor);
-    this.input.on("pointerdown", () => this.cursor.setTexture("cursor-hit"));
-    this.input.on("pointerup", () => this.cursor.setTexture("cursor-interact"));
+    this.input.setDefaultCursor("default");
+   // this.cursor = this.add
+      //.image(0, 0, "cursor-interact")
+      //.setDepth(999)
+      //.setScrollFactor(0)
+     // .setScale(1);
+    //this.uiCamera.ignore(this.cursor);
+    //this.input.on("pointerdown", () => this.cursor.setTexture("cursor-hit"));
+    //this.input.on("pointerup", () => this.cursor.setTexture("cursor-interact"));
 
     // Diálogo
-    const dialogBox = new DialogBox(this);
+    const dialogBox = new DialogBox(this, "faceset-npc");
     this.cameras.main.ignore(dialogBox.getObjects());
 
     // Jugador
@@ -321,6 +332,13 @@ export class GameScene extends Phaser.Scene {
       this.portalActive = true;
       this.portalX = px;
       this.portalY = py;
+
+      // Atajo para abrir el inventario (solo para testing)
+      this.input.keyboard.on("keydown-I", () => {
+        if (GAME_STATE.inventory && GAME_STATE.inventory.length > 0) {
+          this._toggleInventory();
+        }
+      });
     }
 
     this.sound.stopAll();
@@ -340,6 +358,97 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
+  _toggleInventory() {
+    if (this.inventoryOpen) {
+      this.inventoryContainer.destroy();
+      this.inventoryOpen = false;
+      return;
+    }
+
+    this.inventoryOpen = true;
+    const w = this.scale.width;
+    const h = this.scale.height;
+
+    this.inventoryContainer = this.add
+      .container(0, 0)
+      .setDepth(300)
+      .setScrollFactor(0);
+
+    const bg = this.add.rectangle(w / 2, h / 2, 300, 200, 0x000000, 0.9);
+    const title = this.add
+      .text(w / 2, h / 2 - 80, "— INVENTARIO —", {
+        fontSize: "14px",
+        fill: "#ffffff",
+        letterSpacing: 4,
+      })
+      .setOrigin(0.5);
+
+    this.inventoryContainer.add([bg, title]);
+
+    // Items
+    const itemLabels = { book: "📖 Skills" };
+    let y = h / 2 - 40;
+
+    GAME_STATE.inventory.forEach((item) => {
+      const btn = this.add
+        .text(w / 2, y, itemLabels[item] || item, {
+          fontSize: "13px",
+          fill: "#ffff00",
+        })
+        .setOrigin(0.5)
+        .setInteractive();
+
+      btn.on("pointerdown", () => this._openItem(item));
+      this.inventoryContainer.add(btn);
+      y += 30;
+    });
+
+    this.cameras.main.ignore(this.inventoryContainer.getAll());
+  }
+
+  _openItem(item) {
+    const w = this.scale.width;
+    const h = this.scale.height;
+
+    const content = {
+      book: "⚔️ SKILLS\n\nPhaser.js · JavaScript\nHTML/CSS · Vite\nCiberseguridad · Godot",
+    };
+
+    // Limpiar inventario y mostrar contenido
+    this.inventoryContainer.destroy();
+    this.inventoryOpen = false;
+
+    this.itemContainer = this.add
+      .container(0, 0)
+      .setDepth(300)
+      .setScrollFactor(0);
+
+    const bg = this.add.rectangle(w / 2, h / 2, 400, 250, 0x000000, 0.95);
+    const text = this.add
+      .text(w / 2, h / 2, content[item] || item, {
+        fontSize: "12px",
+        fill: "#ffffff",
+        align: "center",
+        lineSpacing: 8,
+      })
+      .setOrigin(0.5);
+
+    const close = this.add
+      .text(w / 2, h / 2 + 100, "[ CERRAR - I ]", {
+        fontSize: "11px",
+        fill: "#888888",
+      })
+      .setOrigin(0.5)
+      .setInteractive();
+
+    close.on("pointerdown", () => {
+      this.itemContainer.destroy();
+    });
+
+    this.itemContainer.add([bg, text, close]);
+    this.cameras.main.ignore(this.itemContainer.getAll());
+  }
+
   update(time, delta) {
     const playerSprite = this.player.getSprite();
     this.player.update(PLAYER_CONFIG.speed);
@@ -347,11 +456,11 @@ export class GameScene extends Phaser.Scene {
     this.slimes.forEach((slime) =>
       slime.update(playerSprite.x, playerSprite.y, delta),
     );
-    this.cursor.setPosition(
-      this.input.activePointer.x,
-      this.input.activePointer.y,
-    );
-    this.biomeEffects.update(playerSprite.x, playerSprite.y); 
+    //this.cursor.setPosition(
+     // this.input.activePointer.x,
+      //this.input.activePointer.y,
+   // );
+    this.biomeEffects.update(playerSprite.x, playerSprite.y);
     if (this.portalActive && this.portalKey.isDown) {
       const dist = Phaser.Math.Distance.Between(
         playerSprite.x,

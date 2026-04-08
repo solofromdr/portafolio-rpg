@@ -28,3 +28,13 @@ const config = {
 };
 
 new Phaser.Game(config);
+
+// Escucha botones del GBA
+window.addEventListener('message', (event) => {
+  if (event.data?.type === 'keydown' || event.data?.type === 'keyup') {
+    window.dispatchEvent(new KeyboardEvent(event.data.type, {
+      key: event.data.key,
+      bubbles: true
+    }))
+  }
+})

@@ -55,8 +55,6 @@ export class ProjectileManager {
 
     // Reproduce animación de ataque en el player
     const playerSprite = this.scene.player.getSprite();
-    console.log("anim exists:", this.scene.anims.exists("player-attack"));
-    console.log("anim exists:", this.scene.anims.exists("player-attack"));
     this.scene.player.isAttacking = true;
     playerSprite.anims.play("player-attack", true);
     playerSprite.once("animationcomplete", () => {
@@ -73,6 +71,10 @@ export class ProjectileManager {
   enable() {
     this.enabled = true;
   }
+
+  disable() {
+  this.enabled = false;
+}
 
   getGroup() {
     return this.group;

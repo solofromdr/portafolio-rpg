@@ -3,6 +3,7 @@ import { SlimeBoss } from "../entities/SlimeBoss.js";
 import { Player } from "../entities/Player.js";
 import { HealthBar } from "../ui/healthbar.js";
 import { ProjectileManager } from "../entities/Projectile.js";
+import { DialogBox } from "../ui/DialogBox.js";
 
 export class BattleScene extends Phaser.Scene {
   constructor() {
@@ -61,6 +62,15 @@ export class BattleScene extends Phaser.Scene {
     this.load.audio("sfx-hit-boss", "/audio/sounds/hit-boss.wav");
     this.load.audio("sfx-death-boss", "/audio/sounds/death-boss.wav");
     this.load.audio("sfx-hit-minions", "/audio/sounds/hit-minions.wav");
+    // UI
+    this.load.image("dialogbox", "/assets/ui/DialogBox.png");
+    this.load.image("faceset-npc", "/assets/ui/DialogBoxFaceset.png");
+    this.load.image("faceset-boss", "/assets/ui/faceset-boss.png");
+
+    this.load.spritesheet("portfolio-items", "/assets/ui/Items.png", {
+      frameWidth: 16,
+      frameHeight: 16,
+    });
   }
 
   create() {
@@ -167,6 +177,13 @@ export class BattleScene extends Phaser.Scene {
     this.sound.stopAll();
     this.music = this.sound.add("music-battle", { loop: true, volume: 0.5 });
     this.music.play();
+
+    this.input.keyboard.on("keydown-K", () => {
+      if (this.boss) {
+        this.boss.hp = 0;
+        this.boss.die();
+      }
+    });
   }
 
   _createNebula(x, y, color, size) {
@@ -222,6 +239,64 @@ export class BattleScene extends Phaser.Scene {
     const w = this.scale.width;
     const h = this.scale.height;
 
+    this.player.getSprite().body.enable = false;
+    this.projectiles.disable();
+
+    const npcLines = [
+      "Viajero... el guardián despierta.",
+      "Recuerda: usa SPACE para hacer dash\ny esquivar sus ataques.",
+    ];
+
+    let lineIndex = 0;
+
+    const dialogBg = this.add
+      .rectangle(
+        this.map.widthInPixels / 2,
+        this.map.heightInPixels * 0.9,
+        220,
+        40,
+        0x000000,
+        0.8,
+      )
+      .setDepth(199);
+
+    const dialogText = this.add
+      .text(
+        this.map.widthInPixels / 2,
+        this.map.heightInPixels * 0.9,
+        npcLines[0],
+        {
+          fontSize: "13px",
+          fill: "#ffffff",
+          stroke: "#000000",
+          strokeThickness: 4,
+          align: "center",
+          wordWrap: { width: 200 },
+        },
+      )
+      .setOrigin(0.5)
+      .setDepth(200);
+
+    const spaceKey = this.input.keyboard.addKey(
+      Phaser.Input.Keyboard.KeyCodes.SPACE,
+    );
+    spaceKey.on("down", () => {
+      lineIndex++;
+      if (lineIndex < npcLines.length) {
+        dialogText.setText(npcLines[lineIndex]);
+      } else {
+        dialogText.destroy();
+        dialogBg.destroy();
+        spaceKey.removeAllListeners();
+        this._startBossIntro();
+      }
+    });
+  }
+
+  _startBossIntro() {
+    const w = this.scale.width;
+    const h = this.scale.height;
+
     this.cameras.main.shake(600, 0.02);
     this.cameras.main.flash(300, 100, 0, 150);
 
@@ -262,24 +337,23 @@ export class BattleScene extends Phaser.Scene {
             alpha: 0,
             duration: 600,
             onComplete: () => {
+              this.player.getSprite().body.enable = true;
+              this.projectiles.enable();
               this.boss = new SlimeBoss(
                 this,
                 this.map.widthInPixels / 2,
                 this.map.heightInPixels / 2,
               );
               this.physics.add.collider(this.boss.getSprite(), this.wallsLayer);
-              const playerRef = this.player;
               this.physics.add.overlap(
                 this.player.getSprite(),
                 this.boss.getSprite(),
-                () => {
-                  playerRef.takeDamage(1);
-                },
+                () => this.player.takeDamage(1),
               );
               this.physics.add.overlap(
                 this.projectiles.getGroup(),
                 this.boss.getSprite(),
-                (objA, objB) => {
+                () => {
                   this.boss.takeDamage();
                   this.ui?.updateBossHp(this.boss.hp, this.boss.maxHp);
                 },
@@ -380,6 +454,32 @@ export class BattleScene extends Phaser.Scene {
     });
   }
 
+  _dropItem() {
+    const book = this.physics.add.sprite(
+      this.map.widthInPixels / 2,
+      this.map.heightInPixels / 2,
+      "portfolio-items",
+      1,
+    );
+
+    book.setScale(1);
+
+    this.tweens.add({
+      targets: book,
+      y: book.y - 8,
+      duration: 500,
+      yoyo: true,
+      repeat: -1,
+    });
+
+    this.physics.add.overlap(this.player.getSprite(), book, () => {
+      book.destroy();
+      GAME_STATE.inventory = GAME_STATE.inventory || [];
+      GAME_STATE.inventory.push("book");
+      this._triggerVictory(); // ← victoria después de recoger
+    });
+  }
+
   _triggerDeath() {
     this.player.getSprite().setVelocity(0, 0);
     this.cameras.main.shake(600, 0.03);
@@ -453,7 +553,7 @@ export class BattleScene extends Phaser.Scene {
 
       if (this.boss.dead && !this.victoryTriggered) {
         this.victoryTriggered = true;
-        this._triggerVictory();
+        this._dropItem(); // ← drop primero
       }
     }
   }

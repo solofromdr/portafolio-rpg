@@ -1,29 +1,44 @@
 export class DialogBox {
-  constructor(scene) {
+  constructor(scene, faceset = null) {
     this.scene = scene;
     this.visible = false;
 
     const w = scene.scale.width;
     const h = scene.scale.height;
 
-    this.box = scene.add.rectangle(w / 2, h - 60, w - 20, 100, 0x000000, 0.8);
+    // Dialog box PNG en vez de rectángulo
+    this.box = scene.add.image(w / 2, h - 60, "dialogbox");
     this.box.setScrollFactor(0);
     this.box.setVisible(false);
+    this.box.setDisplaySize(w - 20, 110);
 
-    this.text = scene.add.text(w / 2, h - 110, "", {
+    // Faceset (opcional)
+    this.faceImage = null;
+    if (faceset) {
+      this.faceImage = scene.add.image(90, h - 52, faceset);
+      this.faceImage.setScrollFactor(0);
+      this.faceImage.setVisible(false);
+      this.faceImage.setDisplaySize(72, 72);
+      this.faceImage.setDepth(101);
+    }
+
+    // Texto
+    this.text = scene.add.text(faceset ? 170 : w / 2, h - 85, "", {
       fontSize: "12px",
-      fill: "#ffffff",
-      wordWrap: { width: w - 40 },
-      align: "center",
+      fill: "#1a1a1a",
+      wordWrap: { width: faceset ? w - 140 : w - 40 },
+      align: faceset ? "left" : "center",
     });
-    this.text.setOrigin(0.5, 0);
+    this.text.setOrigin(faceset ? 0 : 0.5, 0);
     this.text.setScrollFactor(0);
     this.text.setVisible(false);
+    this.text.setDepth(102);
   }
 
   show(message) {
     this.box.setVisible(true);
     this.text.setVisible(true);
+    if (this.faceImage) this.faceImage.setVisible(true);
     this.text.setText(message);
     this.visible = true;
   }
@@ -31,6 +46,7 @@ export class DialogBox {
   hide() {
     this.box.setVisible(false);
     this.text.setVisible(false);
+    if (this.faceImage) this.faceImage.setVisible(false);
     this.visible = false;
   }
 
@@ -57,11 +73,14 @@ export class DialogBox {
   }
 
   getObjects() {
-    return [this.box, this.text];
+    const objs = [this.box, this.text];
+    if (this.faceImage) objs.push(this.faceImage);
+    return objs;
   }
 
   setDepth(depth) {
     this.box.setDepth(depth);
     this.text.setDepth(depth + 1);
+    if (this.faceImage) this.faceImage.setDepth(depth + 2);
   }
 }

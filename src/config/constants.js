@@ -30,6 +30,7 @@ export const GAME_STATE = {
   boss2Defeated: false,
   boss3Defeated: false,
   boss4Defeated: false,
+  inventory: [],
 };
 
 export const GATES = {

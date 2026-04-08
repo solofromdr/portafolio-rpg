@@ -127,12 +127,6 @@ export class SlimeBoss {
     this.scene.cameras.main.shake(500, 0.03);
     this.scene.cameras.main.flash(400, 0, 100, 255);
 
-    console.log(
-      "texture exists:",
-      this.scene.textures.exists("slime-boss-phase2-idle"),
-    );
-    console.log("anim exists:", this.scene.anims.exists("boss-phase2-idle"));
-
     // Boss se hace más grande
     this.scene.tweens.add({
       targets: this.sprite,
@@ -142,11 +136,9 @@ export class SlimeBoss {
       onComplete: () => {
         // Cambio de textura DESPUÉS del tween
         this.sprite.clearTint();
-        console.log("tween complete, cambiando textura...");
         this.sprite.setTexture("slime-boss-phase2-idle");
         this.sprite.setFrame(0);
         this.sprite.anims.play("boss-phase2-idle", true);
-        console.log("textura actual:", this.sprite.texture.key);
       },
     });
 
