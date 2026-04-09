@@ -12,11 +12,8 @@ const config = {
   width: GAME_CONFIG.width,
   height: GAME_CONFIG.height,
   backgroundColor: GAME_CONFIG.backgroundColor,
+  parent: "phaser-container",
   pixelArt: true,
-  scale: {
-    mode: Phaser.Scale.FIT,
-    autoCenter: Phaser.Scale.CENTER_BOTH,
-  },
   physics: {
     default: "arcade",
     arcade: {
